@@ -5,8 +5,6 @@ import oandapyV20.endpoints.accounts as accunts
 import oandapyV20.endpoints.trades as trades
 import oandapyV20.endpoints.pricing as pricing
 import pandas as pd
-import technical
-
 
 ## convert candle data from JSON to pandas dataframe
 def dict_to_df(diction):
@@ -21,7 +19,11 @@ def dict_to_df(diction):
         price['complete'] = complete
         data_dic.append(price)
     data_dic = pd.DataFrame(data_dic)
-    data_dic.columns = ['close','complete','high','low','open','time','volume']
+    data_dic = data_dic.rename({'o':'open',
+        'h':'high',
+        'l':'low',
+        'c':'close'},axis = 'columns')
+    #data_dic.columns = ['close','complete','high','low','open','time','volume']
     data_dic[['close','high','low','open']] = data_dic[['close','high','low','open']].astype(dtype=float)
     return data_dic
 
@@ -32,13 +34,9 @@ def request_data(client,instrument,frequency='M30',count = 60):
             'granularity': frequency
         }
     candle_data = ins.InstrumentsCandles(instrument=instrument, params=param)
-    try:
-        client.request(candle_data)
-        candle_data = candle_data.response['candles']
-        candle_data = dict_to_df(candle_data)
-    except Exception:
-        print('Failed to extract candle data because of exception')
-        return None
+    client.request(candle_data)
+    candle_data = candle_data.response['candles']
+    candle_data = dict_to_df(candle_data)
     return candle_data
 
 ##request position book, percentage of long and short position at each price
